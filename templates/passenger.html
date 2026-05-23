@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จองที่นั่ง - Smart Bus Korat</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #f4f6f9;
+        }
+
+        /* --- Navbar --- */
+        .navbar-custom {
+            background-color: #001f3f;
+            padding: 15px 0;
+            color: white;
+        }
+        .navbar-brand { color: white; font-weight: bold; font-size: 1.5rem; }
+
+        /* --- Layout --- */
+        .booking-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-top: -50px; /* ดึงขึ้นไปทับ Header */
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-bg {
+            background: linear-gradient(rgba(0, 31, 63, 0.8), rgba(0, 31, 63, 0.8)), url('/static/my-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .section-title {
+            color: #001f3f;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border-left: 5px solid #ffc107;
+            padding-left: 10px;
+        }
+
+        /* --- Face Capture Zone --- */
+        .face-box {
+            border: 2px dashed #bdc3c7;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: 0.3s;
+            height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .face-box:hover { background: #e9ecef; }
+        .face-box.active { border-color: #28a745; background: #d4edda; }
+        .face-box i { font-size: 2rem; margin-bottom: 5px; color: #6c757d; }
+        .face-box.active i { color: #28a745; }
+
+        /* --- Seat Grid --- */
+        .seat-grid-container {
+            background: #eee;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        .seat-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* แถวละ 4 ที่นั่ง */
+            gap: 10px;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        .seat {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #555;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .seat:hover { transform: scale(1.1); border-color: #ffc107; }
+        .seat.selected { background: #ffc107; color: #001f3f; border-color: #e0a800; font-weight: bold; }
+        .seat.booked { background: #ff4d4d; color: white; cursor: not-allowed; opacity: 0.6; pointer-events: none; }
+
+        /* --- Video --- */
+        video {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-confirm {
+            background-color: #ffc107;
+            color: #001f3f;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            width: 100%;
+            transition: 0.3s;
+        }
+        .btn-confirm:hover { background-color: #e0a800; }
+
+        .trip-info-badge {
+            background: #e3f2fd;
+            color: #001f3f;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-bg">
+        <h2 class="fw-bold"><i class="fas fa-ticket-alt me-2"></i> ยืนยันการจอง</h2>
+    </div>
+
+    <div class="container mb-5">
+        <div class="booking-card p-4">
+            <div class="row g-4">
+                
+                <div class="col-lg-7 border-end">
+                    <h5 class="section-title">1. ข้อมูลการเดินทาง</h5>
+                    
+                    <div class="trip-info-badge">
+                        <div class="row">
+                            <div class="col-md-6"><strong><i class="fas fa-route"></i> เส้นทาง:</strong> {{ route }}</div>
+                            <div class="col-md-3"><strong><i class="far fa-calendar-alt"></i> วันที่:</strong> {{ date }}</div>
+                            <div class="col-md-3"><strong><i class="far fa-clock"></i> เวลา:</strong> {{ time }}</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">ชื่อ-นามสกุล ผู้โดยสาร</label>
+                        <input type="text" id="nm" class="form-control" placeholder="กรอกชื่อจริง-นามสกุล">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">เบอร์โทรศัพท์</label>
+                        <input type="tel" id="ph" class="form-control" placeholder="08x-xxx-xxxx">
+                    </div>
+
+                    <h5 class="section-title">2. ลงทะเบียนใบหน้า (เพื่อ Check-in)</h5>
+                    <div class="alert alert-info py-2 small">
+                        <i class="fas fa-info-circle"></i> กรุณาถ่ายรูปหรืออัปโหลดให้ครบ 3 มุม
+                    </div>
+
+                    <video id="v" autoplay muted></video>
+                    
+                    <div class="row g-2 mb-3">
+                        <div class="col-4">
+                            <div class="face-box" id="box-front">
+                                <i class="fas fa-user"></i>
+                                <small>หน้าตรง</small>
+                                <button class="btn btn-sm btn-outline-secondary mt-1" onclick="triggerInput('front')" style="font-size: 10px;">อัปโหลด</button>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="face-box" id="box-left">
+                                <i class="fas fa-arrow-left"></i>
+                                <small>หันซ้าย</small>
+                                <button class="btn btn-sm btn-outline-secondary mt-1" onclick="triggerInput('left')" style="font-size: 10px;">อัปโหลด</button>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="face-box" id="box-right">
+                                <i class="fas fa-arrow-right"></i>
+                                <small>หันขวา</small>
+                                <button class="btn btn-sm btn-outline-secondary mt-1" onclick="triggerInput('right')" style="font-size: 10px;">อัปโหลด</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="file" id="fileInput" hidden onchange="handleFile(this)">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-dark flex-grow-1" onclick="startCamera()"><i class="fas fa-camera"></i> เปิดกล้อง</button>
+                        <button id="snap" class="btn btn-warning flex-grow-1 d-none" onclick="capture()">📸 ถ่ายภาพ</button>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <h5 class="section-title">3. เลือกที่นั่ง</h5>
+                    
+                    <div class="seat-grid-container">
+                        <div class="seat-grid" id="seatGrid">
+                            <div class="text-center w-100 py-5"><i class="fas fa-spinner fa-spin"></i> กำลังโหลดผัง...</div>
+                        </div>
+                        
+                        <div class="mt-3 d-flex justify-content-center gap-3 small">
+                            <span class="d-flex align-items-center"><div class="seat me-1" style="width:20px;height:20px;cursor:default;"></div> ว่าง</span>
+                            <span class="d-flex align-items-center"><div class="seat selected me-1" style="width:20px;height:20px;cursor:default;"></div> ที่เลือก</span>
+                            <span class="d-flex align-items-center"><div class="seat booked me-1" style="width:20px;height:20px;cursor:default;"></div> จองแล้ว</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 p-3 bg-light rounded border">
+                        <h6 class="fw-bold">สรุปการจอง</h6>
+                        <hr>
+                        <p class="mb-1 d-flex justify-content-between"><span>ที่นั่ง:</span> <span id="summary-seat" class="fw-bold text-primary">-</span></p>
+                        <p class="mb-1 d-flex justify-content-between"><span>ราคา:</span> <span class="fw-bold">{{ price }} บาท</span></p>
+                    </div>
+
+                    <button class="btn-confirm mt-3" onclick="submitBooking()">
+                        ยืนยันการจอง
+                    </button>
+                    
+                    <div class="text-center mt-3">
+                        <a href="javascript:history.back()" class="text-secondary small text-decoration-none">ย้อนกลับ</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // รับค่าจาก Flask Template
+        const bookingData = {
+            route: "{{ route }}",
+            date: "{{ date }}",
+            time: "{{ time }}"
+        };
+
+        // --- 1. โหลดที่นั่ง ---
+        function loadSeats() {
+            fetch('/api/seats') // ดึงรายชื่อที่นั่ง (A1, A2...)
+                .then(res => res.json())
+                .then(seats => {
+                    // ดึงสถานะการจอง (ถ้ามี API แยก ก็ดึงมาเทียบ)
+                    fetch('/api/stats').then(res => res.json()).then(stats => {
+                        const grid = document.getElementById('seatGrid');
+                        grid.innerHTML = '';
+                        
+                        // สมมติว่า stats.seats เก็บ status ของแต่ละที่นั่งอยู่
+                        // stats.seats = { "A1": "booked", "A2": "empty" ... }
+
+                        seats.forEach(seatID => {
+                            const div = document.createElement('div');
+                            div.className = 'seat';
+                            div.innerText = seatID;
+                            
+                            // เช็คสถานะ (ถ้าจองแล้ว ให้ใส่ class booked)
+                            if(stats.seats && stats.seats[seatID] && stats.seats[seatID] !== 'empty') {
+                                div.classList.add('booked');
+                            } else {
+                                div.onclick = () => selectSeat(seatID, div);
+                            }
+                            
+                            grid.appendChild(div);
+                        });
+                    });
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('seatGrid').innerText = "โหลดผังที่นั่งไม่สำเร็จ";
+                });
+        }
+        
+        loadSeats();
+
+        // --- 2. การเลือกที่นั่ง ---
+        let currentSeat = null;
+        function selectSeat(seatID, element) {
+            // ลบ class selected ออกจากอันเก่า
+            document.querySelectorAll('.seat.selected').forEach(el => el.classList.remove('selected'));
+            
+            // เลือกอันใหม่
+            element.classList.add('selected');
+            currentSeat = seatID;
+            
+            // อัปเดตสรุป
+            document.getElementById('summary-seat').innerText = seatID;
+        }
+
+        // --- 3. กล้อง & รูปภาพ ---
+        let faceMode = ""; 
+        let faces = { front: null, left: null, right: null };
+        const video = document.getElementById('v');
+
+        function startCamera() {
+            video.style.display = "block";
+            document.getElementById('snap').classList.remove('d-none');
+            navigator.mediaDevices.getUserMedia({video: true})
+                .then(stream => video.srcObject = stream)
+                .catch(err => alert("ไม่สามารถเปิดกล้องได้: " + err));
+        }
+
+        function triggerInput(mode) {
+            faceMode = mode;
+            document.getElementById('fileInput').click();
+        }
+
+        function handleFile(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => saveFace(faceMode, e.target.result);
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function capture() {
+            // Auto switch mode if not set
+            if(!faceMode) {
+                if(!faces.front) faceMode = "front";
+                else if(!faces.left) faceMode = "left";
+                else if(!faces.right) faceMode = "right";
+                else faceMode = "front"; // Loop back or alert
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            saveFace(faceMode, canvas.toDataURL('image/jpeg'));
+            
+            // Auto advance
+            if(faceMode === "front") faceMode = "left";
+            else if(faceMode === "left") faceMode = "right";
+        }
+
+        function saveFace(mode, data) {
+            faces[mode] = data;
+            
+            const box = document.getElementById(`box-${mode}`);
+            box.classList.add('active');
+            
+            // เปลี่ยนไอคอนเป็นติ๊กถูก
+            const icon = box.querySelector('i');
+            icon.className = "fas fa-check-circle";
+            
+            // แสดงรูปเล็กๆ (Optional)
+            box.style.backgroundImage = `url(${data})`;
+            box.style.backgroundSize = "cover";
+            box.style.backgroundPosition = "center";
+            icon.style.textShadow = "0 0 5px white"; // ให้มองเห็นไอคอนบนรูป
+        }
+
+        // --- 4. ส่งข้อมูลการจอง ---
+        function submitBooking() {
+            const name = document.getElementById('nm').value;
+            const phone = document.getElementById('ph').value;
+
+            // Validation
+            if(!name || !phone) return alert("กรุณากรอกชื่อและเบอร์โทร");
+            if(!currentSeat) return alert("กรุณาเลือกที่นั่ง");
+            if(!faces.front) return alert("กรุณาถ่ายรูปหน้าตรง (จำเป็น)");
+
+            // Prepare Data
+            const payload = {
+                name: name,
+                phone: phone,
+                route: bookingData.route,
+                date: bookingData.date, // + time ถ้า backend รองรับ
+                seat: currentSeat,
+                faces: faces
+            };
+
+            // Call API
+            fetch('/api/book', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    alert("จองสำเร็จ!");
+                    window.location.href = '/summary'; // ไปหน้าสรุปผล
+                } else {
+                    alert("เกิดข้อผิดพลาด: " + data.message);
+                }
+            })
+            .catch(err => alert("Error: " + err));
+        }
+    </script>
+</body>
+</html>

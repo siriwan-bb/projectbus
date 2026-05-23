@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Ticket ของฉัน</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background-color: #fffcef; /* พื้นหลังสีเทาเข้ม ให้ตั๋วเด่น */
+            font-family: 'Sarabun', sans-serif;
+            padding: 20px 0;
+            min-height: 100vh;
+        }
+        
+        /* ตัวตั๋ว (Paper Receipt) */
+        .ticket-paper {
+            background: #fff;
+            max-width: 380px;
+            margin: 0 auto;
+            padding: 30px 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative;
+            /* ตัดขอบหยักๆ ด้านล่าง (เหมือนฉีกกระดาษ) */
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 97% 98%, 94% 100%, 91% 98%, 88% 100%, 85% 98%, 82% 100%, 79% 98%, 76% 100%, 73% 98%, 70% 100%, 67% 98%, 64% 100%, 61% 98%, 58% 100%, 55% 98%, 52% 100%, 49% 98%, 46% 100%, 43% 98%, 40% 100%, 37% 98%, 34% 100%, 31% 98%, 28% 100%, 25% 98%, 22% 100%, 19% 98%, 16% 100%, 13% 98%, 10% 100%, 7% 98%, 4% 100%, 1% 98%, 0 100%);
+        }
+
+        .header-logo {
+            text-align: center;
+            border-bottom: 2px dashed #333;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .header-logo i { font-size: 3rem; color: #001f3f; }
+        .company-name { font-weight: bold; font-size: 1.2rem; margin-top: 5px; }
+        .sub-header { font-size: 0.9rem; color: #555; }
+
+        .ticket-info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        
+        .info-label { color: #666; font-size: 0.85rem; }
+        .info-value { font-weight: bold; color: #000; text-align: right; }
+
+        .route-box {
+            background: #f0f2f5;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 15px 0;
+            border: 1px solid #ddd;
+        }
+        
+        .big-seat {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #d63031;
+            line-height: 1;
+        }
+
+        .dashed-line {
+            border-top: 2px dashed #aaa;
+            margin: 15px 0;
+        }
+
+        .qr-section {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .qr-img { width: 120px; height: 120px; mix-blend-mode: multiply; }
+
+        .footer-note {
+            font-size: 0.75rem;
+            color: #888;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .btn-save {
+            width: 100%;
+            background: #001f3f;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 50px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ticket-paper">
+        <div class="header-logo">
+            <i class="fas fa-bus-alt"></i>
+            <div class="company-name">SMART BUS KORAT</div>
+            <div class="sub-header">ตั๋วโดยสาร E-Ticket</div>
+        </div>
+
+        <div class="ticket-info-row">
+            <span><span class="info-label">เลขที่ตั๋ว:</span> <br> <b>{{ ticket_id }}</b></span>
+            <span class="text-end"><span class="info-label">วันที่ออกตั๋ว:</span> <br> {{ info.date }}</span>
+        </div>
+
+        <div class="dashed-line"></div>
+
+        <div class="text-center mb-2">
+            <small class="text-muted">เส้นทาง / Route</small>
+            <h5 class="fw-bold text-primary mb-0">{{ info.route }}</h5>
+        </div>
+
+        <div class="row g-2 mt-2">
+            <div class="col-4">
+                <div class="p-2 border rounded text-center bg-light">
+                    <span class="info-label d-block">เวลาออก</span>
+                    <b style="font-size: 1.1rem;">09:00</b> </div>
+            </div>
+            <div class="col-4">
+                <div class="p-2 border rounded text-center bg-light">
+                    <span class="info-label d-block">ทะเบียนรถ</span>
+                    <b>289-12</b>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="p-2 border rounded text-center bg-warning bg-opacity-25 border-warning">
+                    <span class="info-label d-block text-danger">ที่นั่ง</span>
+                    <b class="text-danger" style="font-size: 1.2rem;">{{ info.seat }}</b>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashed-line"></div>
+
+        <div class="ticket-info-row">
+            <span class="info-label">ผู้โดยสาร (Passenger):</span>
+            <span class="info-value">{{ info.name }}</span>
+        </div>
+        <div class="ticket-info-row">
+            <span class="info-label">เบอร์โทร (Phone):</span>
+            <span class="info-value">{{ info.phone }}</span>
+        </div>
+        <div class="ticket-info-row mt-3">
+            <span class="info-label" style="font-size: 1rem;">ราคา (Price):</span>
+            <span class="info-value text-danger" style="font-size: 1.5rem;">{{ price }} บาท</span>
+        </div>
+
+        <div class="dashed-line"></div>
+
+        <div class="qr-section">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=TICKET:{{ ticket_id }}-{{ info.seat }}" class="qr-img" alt="QR Code">
+            <div class="mt-2 small text-muted">Ticket ID: {{ ticket_id }}</div>
+        </div>
+
+        <div class="footer-note">
+            ** โปรดมาถึงก่อนเวลารถออก 30 นาที **<br>
+            Please arrive 30 mins before departure.<br>
+            ใช้ QR Code นี้สแกนเพื่อขึ้นรถ
+        </div>
+
+        <a href="/" class="btn btn-save no-print">
+            <i class="fas fa-home me-2"></i> กลับหน้าหลัก
+        </a>
+        <div class="text-center mt-2">
+            <a href="#" onclick="window.print()" class="text-muted small no-print">
+                <i class="fas fa-download"></i> บันทึกรูปภาพ
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>

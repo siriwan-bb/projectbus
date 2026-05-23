@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ตรวจสอบการจอง</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background: #f4f6f9; font-family: 'Prompt', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        .card { border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        .btn-search { background-color: #001f3f; color: white; border-radius: 50px; padding: 10px 20px; width: 100%; font-weight: bold;}
+        .btn-search:hover { background-color: #ffc107; color: #000; }
+    </style>
+</head>
+<body>
+    <div class="card p-4">
+        <h3 class="text-center mb-4"><i class="fas fa-search text-primary"></i> ตรวจสอบสถานะ</h3>
+        
+        {% if error %}
+        <div class="alert alert-danger text-center">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label text-muted">กรอกเบอร์โทรศัพท์ที่ใช้จอง</label>
+                <input type="tel" name="phone" class="form-control form-control-lg text-center" placeholder="08x-xxx-xxxx" required>
+            </div>
+            <button type="submit" class="btn btn-search">ค้นหาข้อมูล</button>
+        </form>
+        <div class="text-center mt-3">
+            <a href="/" class="text-muted small text-decoration-none">← กลับหน้าหลัก</a>
+        </div>
+    </div>
+</body>
+</html>

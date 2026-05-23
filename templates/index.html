@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จองตั๋วรถทัวร์ - SNN Bus  </title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- 1. ส่วนพื้นหลังและ Navbar --- */
+        .hero-section {
+            /* ใส่รูปพื้นหลัง */
+            background: linear-gradient(rgba(0, 31, 63, 0.5), rgba(0, 31, 63, 0.4)), url('/static/my-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            min-height: 100vh; /* ความสูงเต็มจอ */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* เริ่มจากด้านบน */
+            position: relative;
+        }
+
+        /* Navbar ลอยอยู่ด้านบน */
+        .navbar-custom {
+            width: 100%;
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .brand-logo {
+            font-size: 1.5rem;
+            color: white;
+            font-weight: bold;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .top-menu a, .lang-switch {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .top-menu a:hover { text-decoration: underline; }
+
+        /* --- 2. ส่วนเนื้อหาตรงกลาง --- */
+        .content-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding-bottom: 100px; /* ดันขึ้นมาจากด้านล่างหน่อย */
+        }
+
+        .main-title {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* ปุ่มสีเหลืองบอกประเภทรถ */
+        .tab-bus {
+            background-color: #ffc107;
+            color: #001f3f;
+            padding: 10px 40px;
+            border-radius: 30px 30px 0 0; /* มนเฉพาะด้านบนเพื่อให้ดูเกาะกับกล่อง */
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: -5px; /* ดึงลงมาเกยกับกล่อง Search */
+            position: relative;
+            z-index: 2; /* อยู่เหนือกล่อง Search */
+        }
+
+        /* --- 3. แถบค้นหาแนวยาว (Search Strip) หัวใจสำคัญ --- */
+        .search-strip {
+            background: white;
+            border-radius: 10px;
+            padding: 10px;
+            display: flex; /* จัดเรียงแนวนอน */
+            align-items: center;
+            width: 90%;
+            max-width: 1100px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ช่อง Input แต่ละช่อง */
+        .search-item {
+            flex: 1; /* แบ่งพื้นที่เท่าๆ กัน */
+            padding: 5px 15px;
+            position: relative;
+            text-align: left;
+        }
+
+        /* เส้นคั่นระหว่างช่อง */
+        .divider {
+            width: 1px;
+            height: 40px;
+            background-color: #ddd;
+        }
+
+        .label-text {
+            font-size: 0.8rem;
+            color: #888;
+            display: block;
+            margin-bottom: 0;
+        }
+        
+        .input-custom {
+            width: 100%;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #0056b3;
+            outline: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        /* ปุ่มสลับ (Swap) ตรงกลาง */
+        .swap-container {
+            width: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .btn-swap {
+            background-color: #ffc107;
+            border: none;
+            border-radius: 5px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-swap:hover { transform: rotate(180deg); }
+
+        /* ปุ่มค้นหาด้านขวาสุด */
+        .btn-search {
+            background-color: #ffc107;
+            color: #001f3f;
+            border: none;
+            border-radius: 5px;
+            padding: 15px 30px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            white-space: nowrap;
+            height: 100%;
+        }
+        .btn-search:hover { background-color: #e0a800; }
+
+        /* --- Responsive: มือถือให้เรียงแนวตั้ง --- */
+        @media (max-width: 992px) {
+            .search-strip {
+                flex-direction: column;
+                align-items: stretch;
+                border-radius: 15px;
+                padding: 20px;
+            }
+            .divider { display: none; } /* ซ่อนเส้นคั่นแนวตั้ง */
+            .search-item {
+                border-bottom: 1px solid #eee;
+                padding: 15px 0;
+            }
+            .swap-container {
+                margin: 5px auto;
+                transform: rotate(90deg); /* หมุนลูกศรเป็นแนวตั้ง */
+            }
+            .btn-search {
+                width: 100%;
+                margin-top: 15px;
+            }
+            .navbar-custom {
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .main-title { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero-section">
+        
+        <nav class="navbar navbar-expand-lg navbar-dark bg-transparent">
+            <div class="container">
+                <a class="navbar-brand fw-bold fs-3 text-white" href="#"><i class="fas fa-bus-alt"></i> SNN Bus</a>
+                
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto align-items-center">
+                        <li class="nav-item">
+    <a class="nav-link active" href="#" onclick="setLanguage('th'); return false;">TH</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="#" onclick="setLanguage('en'); return false;">EN</a>
+</li>
+
+                        <li class="nav-item ms-lg-4">
+                            <a class="nav-link" href="/check_booking">ตรวจสอบการจอง</a>
+                        </li>
+
+                        <li class="nav-item ms-lg-3" id="history-btn" style="display: none;">
+                            <a class="nav-link text-warning" href="/history">
+                                <i class="fas fa-history me-1"></i> ประวัติการจอง
+                            </a>
+                        </li>
+
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link" href="/login" id="login-btn">เข้าสู่ระบบ / สมัครสมาชิก</a>
+                        </li>
+
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link btn btn-outline-light rounded-pill px-3 py-1" href="/staff">เจ้าหน้าที่</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="content-wrapper">
+            
+            <h1 class="main-title" data-i18n="hero_title">จองตั๋วรถทัวร์ </h1>
+
+            <div class="tab-bus">
+                <i class="fas fa-bus"></i> <span data-i18n="bus_type">รถโดยสารประจำทาง</span>
+            </div>
+
+            <form action="/passenger_home" method="GET" class="search-strip">
+                
+                <div class="search-item">
+                    <label class="label-text">
+                        <i class="fas fa-map-marker-alt text-danger"></i> <span data-i18n="origin">ต้นทาง</span>
+                    </label>
+                    <select class="input-custom" name="origin">
+                        <option selected disabled>กรุณาเลือก...</option>
+                        {% for loc in locations %}
+                        <option value="{{ loc }}">{{ loc }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="swap-container">
+                    <button type="button" class="btn-swap">
+                        <i class="fas fa-exchange-alt"></i>
+                    </button>
+                </div>
+
+                <div class="search-item">
+                    <label class="label-text">
+                        <i class="fas fa-map-marker-alt text-primary"></i> <span data-i18n="destination">ปลายทาง</span>
+                    </label>
+                    <select class="input-custom" name="destination">
+                        <option selected disabled>กรุณาเลือก...</option>
+                        {% for loc in locations %}
+                        <option value="{{ loc }}">{{ loc }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="search-item">
+                    <label class="label-text">
+                        <i class="far fa-calendar-alt text-success"></i> <span data-i18n="dept_date">วันเดินทาง</span>
+                    </label>
+                    <input type="date" class="input-custom" name="date" required>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="search-item">
+                    <label class="label-text">
+                        <i class="far fa-calendar-plus text-secondary"></i> <span data-i18n="return_date">วันกลับ (ทางเลือก)</span>
+                    </label>
+                    <input type="date" class="input-custom" name="return_date">
+                </div>
+
+                <div style="padding-left: 10px;">
+                    <button type="submit" class="btn-search">
+                        <span data-i18n="search_btn">ค้นหาการเดินทาง</span>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 1. ตั้งค่าวันที่ปัจจุบัน
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('input[type="date"]').forEach(input => {
+                if(!input.value) input.valueAsDate = new Date();
+            });
+        });
+
+        // 2. ข้อมูลภาษา
+        const translations = {
+            th: {
+                hero_title: "จองตั๋วรถทัวร์ ",
+                bus_type: "รถโดยสารประจำทาง",
+                origin: "ต้นทาง",
+                destination: "ปลายทาง",
+                dept_date: "วันเดินทาง",
+                return_date: "วันกลับ (ทางเลือก)",
+                search_btn: "ค้นหาการเดินทาง",
+                login: "ตรวจสอบการจอง",
+                register: "เข้าสู่ระบบ / สมัครสมาชิก"
+            },
+            en: {
+                hero_title: "Face Recognition Bus Booking",
+                bus_type: "Bus Ticket",
+                origin: "Origin",
+                destination: "Destination",
+                dept_date: "Depart Date",
+                return_date: "Return Date (Optional)",
+                search_btn: "Search Trip",
+                login: "Check Booking",
+                register: "Login / Register"
+            }
+        };
+
+        function setLanguage(lang) {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) el.textContent = translations[lang][key];
+            });
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // ตรวจสอบว่าล็อกอินหรือยัง?
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    const username = localStorage.getItem('username');
+
+    if (isLoggedIn === 'true') {
+        // 1. โชว์ปุ่มประวัติการจอง
+        document.getElementById('history-btn').style.display = 'block';
+
+        // 2. เปลี่ยนปุ่ม Login เป็น Logout
+        const loginBtn = document.getElementById('login-btn');
+        loginBtn.innerHTML = '<i class="fas fa-user-circle"></i> คุณ ' + username + ' (ออกจากระบบ)';
+        loginBtn.href = "#";
+        loginBtn.classList.add('text-warning');
+        
+        // สั่งให้กดแล้ว Logout
+        loginBtn.onclick = function() {
+            if(confirm('ต้องการออกจากระบบใช่หรือไม่?')) {
+                localStorage.clear(); // ล้างสถานะ
+                window.location.reload(); // รีโหลดหน้า
+            }
+        };
+    }
+</script>
+<script>
+    // 1. ข้อมูลคำแปล (Dictionary)
+    const translations = {
+        th: {
+            hero_title: "จองตั๋วรถทัวร์",
+            bus_type: "รถโดยสารประจำทาง",
+            origin: "ต้นทาง",
+            destination: "ปลายทาง",
+            dept_date: "วันเดินทาง",
+            search_btn: "ค้นหา",
+            
+            // เมนูบาร์
+            menu_check: "ตรวจสอบการจอง",
+            menu_history: "ประวัติการจอง",
+            menu_login: "เข้าสู่ระบบ / สมัครสมาชิก",
+            menu_staff: "เจ้าหน้าที่"
+        },
+        en: {
+            hero_title: "Bus Ticket Booking",
+            bus_type: "Bus Ticket",
+            origin: "Origin",
+            destination: "Destination",
+            dept_date: "Depart Date",
+            search_btn: "Search",
+
+            // Navbar Menu
+            menu_check: "Check Booking",
+            menu_history: "My Booking",
+            menu_login: "Login / Register",
+            menu_staff: "Staff Only"
+        }
+    };
+
+    // 2. ฟังก์ชันเปลี่ยนภาษา
+    function setLanguage(lang) {
+        // เปลี่ยนข้อความตาม data-i18n
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (translations[lang][key]) {
+                el.innerText = translations[lang][key];
+            }
+        });
+
+        // เปลี่ยนสีตัวหนังสือ TH/EN ให้รู้ว่าเลือกอันไหนอยู่
+        document.querySelectorAll('.nav-link').forEach(link => {
+            if(link.innerText === lang.toUpperCase()) {
+                link.classList.add('active', 'text-warning');
+            } else if (link.innerText === 'TH' || link.innerText === 'EN') {
+                link.classList.remove('active', 'text-warning');
+            }
+        });
+    }
+
+    // 3. ฟังก์ชันอื่นๆ (Date & Login Check)
+    document.addEventListener('DOMContentLoaded', () => {
+        // ตั้งวันที่ปัจจุบัน
+        document.querySelectorAll('input[type="date"]').forEach(input => {
+            if(!input.value) input.valueAsDate = new Date();
+        });
+
+        // ตรวจสอบสถานะล็อกอิน
+        const isLoggedIn = localStorage.getItem('isLoggedIn');
+        const username = localStorage.getItem('username');
+
+        if (isLoggedIn === 'true') {
+            document.getElementById('history-btn').style.display = 'block';
+            
+            const loginBtn = document.getElementById('login-btn');
+            // ถ้าเป็นภาษาไทย
+            loginBtn.innerHTML = '<i class="fas fa-user-circle"></i> คุณ ' + username + ' (ออก)';
+            loginBtn.href = "#";
+            loginBtn.classList.add('text-warning', 'fw-bold');
+            
+            // ลบ data-i18n ออกเพื่อไม่ให้ฟังก์ชันแปลภาษามาทับชื่อคน
+            loginBtn.removeAttribute('data-i18n');
+
+            loginBtn.onclick = function(e) {
+                e.preventDefault();
+                if(confirm('ต้องการออกจากระบบ? / Logout?')) {
+                    localStorage.clear();
+                    window.location.reload();
+                }
+            };
+        }
+    });
+</script>
+<script>
+    // 1. ข้อมูลคำแปล (Dictionary)
+    const translations = {
+        th: {
+            hero_title: "จองตั๋วรถทัวร์", bus_type: "รถโดยสารประจำทาง",
+            origin: "ต้นทาง", destination: "ปลายทาง",
+            dept_date: "วันเดินทาง", return_date: "วันกลับ (ทางเลือก)", search_btn: "ค้นหา",
+            menu_check: "ตรวจสอบการจอง", menu_history: "ประวัติการจอง",
+            menu_login: "เข้าสู่ระบบ / สมัครสมาชิก", menu_staff: "เจ้าหน้าที่"
+        },
+        en: {
+            hero_title: "Bus Ticket Booking", bus_type: "Bus Ticket",
+            origin: "Origin", destination: "Destination",
+            dept_date: "Depart Date", return_date: "Return Date (Optional)", search_btn: "Search",
+            menu_check: "Check Booking", menu_history: "My Booking",
+            menu_login: "Login / Register", menu_staff: "Staff Only"
+        }
+    };
+
+    // 2. ฟังก์ชันเปลี่ยนภาษา (พร้อมบันทึกความจำ)
+    function setLanguage(lang) {
+        // ✅ บันทึกภาษาที่เลือกลงเครื่อง
+        localStorage.setItem('selectedLang', lang);
+
+        // เปลี่ยนคำศัพท์ในหน้าจอ
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (translations[lang][key]) el.textContent = translations[lang][key];
+        });
+
+        // เปลี่ยนสีปุ่ม TH/EN
+        document.querySelectorAll('.nav-link').forEach(link => {
+            if(link.innerText === lang.toUpperCase()) link.classList.add('active', 'text-warning');
+            else if (link.innerText === 'TH' || link.innerText === 'EN') link.classList.remove('active', 'text-warning');
+        });
+    }
+
+    // 3. เริ่มต้นทำงานเมื่อโหลดเว็บ
+    document.addEventListener('DOMContentLoaded', () => {
+        // ✅ อ่านภาษาที่เคยบันทึกไว้ (ถ้าไม่มีให้เป็น 'th')
+        const savedLang = localStorage.getItem('selectedLang') || 'th';
+        setLanguage(savedLang);
+
+        // ตั้งวันที่
+        document.querySelectorAll('input[type="date"]').forEach(input => {
+            if(!input.value) input.valueAsDate = new Date();
+        });
+
+        // ตรวจสอบ Login
+        const isLoggedIn = localStorage.getItem('isLoggedIn');
+        const username = localStorage.getItem('username');
+
+        if (isLoggedIn === 'true') {
+            document.getElementById('history-btn').style.display = 'block';
+            
+            const loginBtn = document.getElementById('login-btn');
+            if(loginBtn) {
+                // ถ้าล็อกอินแล้ว ให้แสดงชื่อ (ไม่ต้องแปลภาษาทับ)
+                loginBtn.innerHTML = '<i class="fas fa-user-circle"></i> คุณ ' + username + ' (ออก)';
+                loginBtn.href = "#";
+                loginBtn.classList.add('text-warning', 'fw-bold');
+                loginBtn.removeAttribute('data-i18n'); 
+
+                loginBtn.onclick = function(e) {
+                    e.preventDefault();
+                    if(confirm('ต้องการออกจากระบบ?')) {
+                        localStorage.clear();
+                        window.location.reload();
+                    }
+                };
+            }
+        }
+    });
+</script>
+</body>
+</html>

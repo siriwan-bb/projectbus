@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ประวัติการจองตั๋ว</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>body{font-family:'Prompt',sans-serif; background:#f4f6f9;}</style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h3 class="mb-4"><i class="fas fa-history text-warning"></i> ประวัติการเดินทางของฉัน</h3>
+        
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>วันที่เดินทาง</th>
+                            <th>เส้นทาง</th>
+                            <th>ที่นั่ง</th>
+                            <th>สถานะ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in bookings %}
+                        <tr>
+                            <td>{{ b.date }}</td>
+                            <td>{{ b.route }}</td>
+                            <td><span class="badge bg-primary">{{ b.seat }}</span></td>
+                            <td>
+                                {% if b.checked_in %}
+                                <span class="badge bg-success">เดินทางแล้ว</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">รอเดินทาง</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">ยังไม่มีประวัติการจอง</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="mt-3">
+            <a href="/" class="btn btn-secondary btn-sm">กลับหน้าหลัก</a>
+        </div>
+    </div>
+</body>
+</html>

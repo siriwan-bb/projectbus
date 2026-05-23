@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Staff Dashboard - BUS TICKET</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #bbd3f8; font-family: 'Kanit', sans-serif; }
+        .dashboard-header { background: #1a202c; color: white; padding: 15px; margin-bottom: 20px; }
+        .video-container { position: relative; border-radius: 15px; overflow: hidden; background: #000; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        canvas { position: absolute; top: 0; left: 0; pointer-events: none; }
+        .seat-map { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .seat-box {
+            width: 45px; height: 45px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: bold;
+        }
+        .zone-label { font-size: 0.8rem; color: #718096; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* ✅ สีสถานะ */
+        .seat-onboard { background: #f0fff4; border-color: #38a169; color: #2f855a; }   /* เขียว */
+        .seat-wrong   { background: #fff5f5; border-color: #e53e3e; color: #c53030; }   /* แดง */
+        .seat-missing { background: #fffaf0; border-color: #dd6b20; color: #c05621; }   /* ส้ม */
+    </style>
+</head>
+<body>
+
+<div class="dashboard-header d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-3">
+        <h3 class="mb-0"> Bus Monitoring System</h3>
+        <a href="/bus-setup" class="btn btn-warning btn-sm fw-bold shadow-sm">
+            🔧 ตั้งค่าผังที่นั่ง
+        </a>
+    </div>
+
+    <div id="stats-summary" class="d-flex gap-4">
+        <span>จองทั้งหมด: <b id="booked-count">0</b></span>
+        <span>ขึ้นรถแล้ว: <b id="onboard-count" class="text-success">0</b></span>
+        <span>ยังไม่ขึ้น: <b id="missing-count" class="text-warning">0</b></span>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="video-container">
+                <video id="video" width="100%" autoplay muted></video>
+                <canvas id="overlay"></canvas>
+            </div>
+            <div id="staff-warning" class="alert alert-danger mt-3 d-none">
+                <strong>⚠️ คำเตือน:</strong> ตรวจพบใบหน้าที่ไม่มีข้อมูลการจอง หรือนั่งผิดตำแหน่ง!
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="seat-map">
+                <h5 class="mb-4">แผนผังที่นั่ง</h5>
+                <div id="seat-map" class="d-flex flex-wrap gap-2"></div>
+
+                <hr>
+                <div class="small">
+                    <span class="badge bg-success">ขึ้นรถแล้ว</span>
+                    <span class="badge bg-danger">นั่งผิด</span>
+                    <span class="badge bg-warning text-dark">ยังไม่มา</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+/* ================= โหลดผังที่นั่ง ================= */
+async function loadSeatMap() {
+    const res = await fetch('/api/staff_seats');
+    const data = await res.json();
+
+    const map = document.getElementById('seat-map');
+    map.innerHTML = '';
+
+    data.seats.forEach(seat => {
+        const div = document.createElement('div');
+        div.className = 'seat-box';
+        div.innerText = seat;
+
+        const status = data.status[seat];
+        if (status === 'onboard') div.classList.add('seat-onboard');
+        else if (status === 'wrong') div.classList.add('seat-wrong');
+        else if (status === 'missing') div.classList.add('seat-missing');
+
+        map.appendChild(div);
+    });
+}
+loadSeatMap();
+
+/* ================= กล้อง ================= */
+const video = document.getElementById('video');
+const canvas = document.getElementById('overlay');
+const ctx = canvas.getContext('2d');
+const warning = document.getElementById('staff-warning');
+
+navigator.mediaDevices.getUserMedia({ video: true }).then(s => {
+    video.srcObject = s;
+    video.onloadedmetadata = () => {
+        canvas.width = video.clientWidth;
+        canvas.height = video.clientHeight;
+    };
+});
+
+/* ================= ตรวจสอบใบหน้า ================= */
+async function processMonitoring() {
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = 640;
+    tempCanvas.height = 480;
+    tempCanvas.getContext('2d').drawImage(video, 0, 0);
+
+    const res = await fetch('/api/verify', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ image: tempCanvas.toDataURL('image/jpeg') })
+    });
+    const data = await res.json();
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let errorFound = false;
+
+    data.results.forEach(r => {
+        const [top, right, bottom, left] = r.box;
+        const sx = canvas.width / 640;
+        const sy = canvas.height / 480;
+
+        ctx.strokeStyle = r.match ? '#38a169' : '#e53e3e';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(left*sx, top*sy, (right-left)*sx, (bottom-top)*sy);
+
+        ctx.fillStyle = ctx.strokeStyle;
+        ctx.font = 'bold 16px Kanit';
+        ctx.fillText(
+            r.match ? `✔ ${r.name} (${r.seat})` : '✘ UNKNOWN / WRONG SEAT',
+            left*sx, top*sy - 10
+        );
+
+        if (!r.match) errorFound = true;
+
+        fetch('/api/update_seat_status', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                seat: r.seat,
+                status: r.match ? 'onboard' : 'wrong'
+            })
+        });
+    });
+
+    loadSeatMap();
+    warning.classList.toggle('d-none', !errorFound);
+    updateStats();
+    loadSeatMap();
+
+
+    setTimeout(processMonitoring, 1000);
+}
+
+
+/* ================= สถิติ ================= */
+async function updateStats() {
+    const res = await fetch('/api/staff_stats');
+    const s = await res.json();
+    document.getElementById('booked-count').innerText = s.booked;
+    document.getElementById('onboard-count').innerText = s.checked_in;
+    document.getElementById('missing-count').innerText = s.remaining;
+}
+
+video.onplay = () => processMonitoring();
+</script>
+
+</body>
+</html>
